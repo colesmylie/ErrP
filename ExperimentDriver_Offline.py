@@ -2,8 +2,9 @@ import pygame
 import socket
 import sys
 import time
+import random
 from Utils.visualization import draw_arrow_fill, draw_ball_fill, draw_fixation_cross, draw_time_balls
-from Utils.experiment_utils import generate_trial_sequence, display_multiple_messages_with_udp
+from Utils.experiment_utils import generate_trial_sequence, generate_trial_sequence_with_errp, display_multiple_messages_with_udp
 from Utils.networking import send_udp_message
 import config
 from pylsl import StreamInlet, resolve_stream
@@ -70,7 +71,7 @@ def show_feedback(duration=5, mode=0):
 
     Parameters:
         duration (float): Duration for which the animation is displayed.
-        mode (int): 0 for 'Imagine Right Arm Movement', 1 for 'Rest'.
+        mode (int): 0 for 'Imagine Right Arm Movement', 1 for 'Rest', 2 for 'ErrP'.
     """
     start_time = time.time()
     
@@ -84,7 +85,7 @@ def show_feedback(duration=5, mode=0):
 
         # Clear screen
         screen.fill(config.black)
-        if mode == 0:
+        if mode == 0 or mode == 2:  # 'Imagine Right Arm Movement' or 'ErrP'
             # Draw the arrow filling
             draw_arrow_fill(progress, screen_width, screen_height, show_threshold=False)
             draw_ball_fill(0, screen_width, screen_height, show_threshold=False)
@@ -127,7 +128,8 @@ print("Looking for EEG data stream...")
 streams = resolve_stream('type', 'EEG')
 inlet = StreamInlet(streams[0])
 print("EEG data stream detected. Starting experiment...")
-trial_sequence = generate_trial_sequence(config.TOTAL_TRIALS, config.MAX_REPEATS)
+#trial_sequence = generate_trial_sequence(config.TOTAL_TRIALS, config.MAX_REPEATS)
+trial_sequence = generate_trial_sequence_with_errp(config.TOTAL_TRIALS_ERRP, config.MAX_REPEATS)
 current_trial = 0
 running = True
 clock = pygame.time.Clock()
@@ -188,7 +190,7 @@ while running and current_trial < len(trial_sequence):
         mode = trial_sequence[current_trial]
 
     # Send UDP triggers
-    if mode == 0:
+    if mode == 0 or mode == 2:
         send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["MI_BEGIN"])
         send_udp_message(fes_socket, config.UDP_FES["IP"], config.UDP_FES["PORT"], "FES_SENS_GO") if FES_toggle == 1 else print("FES is disabled. Skipping interaction.")
     else:
@@ -207,6 +209,14 @@ while running and current_trial < len(trial_sequence):
         duration = config.TIME_ROB
         send_udp_message(fes_socket, config.UDP_FES["IP"], config.UDP_FES["PORT"], "FES_MOTOR_GO") if FES_toggle == 1 else print("FES is disabled. Skipping interaction.")
         send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_BEGIN"])
+    elif mode == 2: #ERRP Trial
+        send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["MI_END"])
+        messages = ["Robot Move"]
+        udp_messages = ["x", "g"]
+        colors = [config.green]
+        duration = duration = random.uniform(0.25 * config.TIME_ROB, 0.75 * config.TIME_ROB)
+        send_udp_message(fes_socket, config.UDP_FES["IP"], config.UDP_FES["PORT"], "FES_MOTOR_GO") if FES_toggle == 1 else print("FES is disabled. Skipping interaction.")
+        send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_BEGIN"])
     else:
         send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["REST_END"])
         messages = ["Robot Stationary"]
@@ -220,7 +230,7 @@ while running and current_trial < len(trial_sequence):
         duration=duration, udp_messages=udp_messages,
         udp_socket=udp_socket_robot, udp_ip=config.UDP_ROBOT["IP"], udp_port=config.UDP_ROBOT["PORT"]
     )
-    if mode == 0:
+    if mode == 0 or mode == 2:
         send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_END"])
     
     display_fixation_period(duration = 3)

@@ -1,3 +1,4 @@
+import random
 # Configuration file for EEG experiments
 
 # UDP Settings
@@ -33,6 +34,7 @@ EOG_TOGGLE = 0  # Toggle to enable or disable EOG processing (1 = enabled, 0 = d
 
 # Experiment Parameters
 TOTAL_TRIALS = 30  # Total number of trials
+TOTAL_TRIALS_ERRP = 45 # Total number of trials for ErrP experiment
 MAX_REPEATS = 3  # Maximum consecutive repeats of the same condition
 N_SPLITS = 5  # Number of splits for KFold cross-validation
 TIME_MI = 5 # time for motor imagery and rest
@@ -111,6 +113,8 @@ TRIGGERS = {
     "ROBOT_END": "320",
     "ROBOT_EARLYSTOP": "340",
     "ROBOT_CONFIRM_STOP": "345",
+    "ERRP_BEGIN": "400",
+    "ERRP_END": "420",
     "REST_BEGIN": "100",
     "REST_END": "120",
     "REST_EARLYSTOP": "140"

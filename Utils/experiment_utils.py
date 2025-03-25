@@ -83,6 +83,19 @@ def generate_trial_sequence(total_trials=30, max_repeats=3):
     return fixed_trials
 
 
+# for ErrP
+def generate_trial_sequence_with_errp(total_trials=45, max_repeats=3):
+    trials = [0] * (total_trials // 3) + [1] * (total_trials // 3) + [2] * (total_trials // 3)  # 2 is ErrP trial
+    random.shuffle(trials)
+    fixed_trials = []
+    for trial in trials:
+        if len(fixed_trials) >= max_repeats and all(t == trial for t in fixed_trials[-max_repeats:]):
+            alternatives = [t for t in set([0, 1, 2]) if t != trial]
+            random.shuffle(alternatives)
+            trial = alternatives[0]
+        fixed_trials.append(trial)
+    return fixed_trials
+
 
 def display_multiple_messages_with_udp(messages, colors, offsets, duration=13, udp_messages=None, udp_socket=None, udp_ip=None, udp_port=None):
     font = pygame.font.SysFont(None, 72)
