@@ -113,8 +113,14 @@ TRIGGERS = {
     "ROBOT_END": "320",
     "ROBOT_EARLYSTOP": "340",
     "ROBOT_CONFIRM_STOP": "345",
+
+    #Coles
+    "ROBOT_RESTART": "350",
+
     "ERRP_BEGIN": "400",
     "ERRP_END": "420",
+    #end coles
+    
     "REST_BEGIN": "100",
     "REST_END": "120",
     "REST_EARLYSTOP": "140"
