@@ -7,6 +7,7 @@ import datetime
 import os
 import csv
 import pandas as pd
+import random
 from pylsl import StreamInlet, resolve_stream
 import numpy as np
 from pyriemann.estimation import Shrinkage
@@ -462,6 +463,47 @@ def classify_real_time(inlet, window_size_samples, step_size_samples, all_probab
 
 
 
+def classify_errp(inlet):
+    new_data, _ = inlet.pull_chunk(timeout=0.1, max_samples=config.FS)
+    errp_np = np.array(new_data[-config.FS*.85:]) #Ignore first 150 ms for visual delay
+    # Convert to MNE RawArray
+    sfreq = config.FS
+    info = mne.create_info(ch_names=channel_names, sfreq=sfreq, ch_types="eeg")
+    raw = mne.io.RawArray(errp_np, info)
+    # Drop AUX Channels (These are NOT EEG)
+    aux_channels = {"AUX1", "AUX2", "AUX3", "AUX7", "AUX8", "AUX9", "TRIGGER"}
+    existing_aux = [ch for ch in aux_channels if ch in raw.ch_names]
+    if existing_aux:
+        raw.drop_channels(existing_aux)
+    # Standardize Channel Naming to Match 10-20 Montage
+    rename_dict = {
+        "FP1": "Fp1", "FPZ": "Fpz", "FP2": "Fp2",
+        "FZ": "Fz", "CZ": "Cz", "PZ": "Pz", "POZ": "POz", "OZ": "Oz"
+    }
+    raw.rename_channels(rename_dict)
+
+    # Remove Mastoid Channels if Present
+    mastoid_channels = ["M1", "M2"]
+    existing_mastoids = [ch for ch in mastoid_channels if ch in raw.ch_names]
+    if existing_mastoids:
+        raw.drop_channels(existing_mastoids)
+
+    # Ensure Data Matches Standard 10-20 Montage
+    montage = mne.channels.make_standard_montage("standard_1020")
+    raw.set_montage(montage, match_case=True, on_missing="warn")
+
+    # Convert Data to Microvolts (µV)
+    #raw._data /= 1e6  # Convert Volts → µV
+    for ch in raw.info['chs']:
+        ch['unit'] = 201  # MNE Code for µV
+
+    # Apply Notch and Bandpass Filtering (IIR to avoid FIR length issues)
+    raw.notch_filter(60, method="iir")  
+
+    #!!! How to process for ErrP?
+
+    #temp random classify
+    return random.choice([True, False])
 
 
 def hold_messages_and_classify(messages, colors, offsets, duration, inlet, mode, udp_socket, udp_ip, udp_port,
@@ -547,6 +589,18 @@ def hold_messages_and_classify(messages, colors, offsets, duration, inlet, mode,
                 ["Stopping Robot"], [(255, 0, 0)], [0], duration=5,
                 udp_messages=["s"], udp_socket=udp_socket, udp_ip=udp_ip, udp_port=udp_port
             )
+
+            #Test ERRP here
+            is_ERRP = classify_errp(inlet)
+            if (is_ERRP):
+                early_stop = False
+                send_udp_message(udp_socket_fes, config.UDP_FES["IP"], config.UDP_FES["PORT"], "FES_MOTOR_GO") if FES_toggle == 1 else print("FES is disabled.")
+                send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_RESTART"])
+                # !!! How to make robot finish motion
+                while time.time() - start_time < duration:
+                    #clock.tick(30)
+                    time.sleep(0.1)
+
             break
 
         # Check for quit events
