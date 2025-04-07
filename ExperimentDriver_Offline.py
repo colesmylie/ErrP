@@ -232,6 +232,8 @@ while running and current_trial < len(trial_sequence):
     )
     if mode == 0 or mode == 2:
         send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_END"])
+        if mode == 2:
+            send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_EARLYSTOP"])
     
     display_fixation_period(duration = 3)
 

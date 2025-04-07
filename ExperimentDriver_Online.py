@@ -594,9 +594,23 @@ def hold_messages_and_classify(messages, colors, offsets, duration, inlet, mode,
             is_ERRP = classify_errp(inlet)
             if (is_ERRP):
                 early_stop = False
-                send_udp_message(udp_socket_fes, config.UDP_FES["IP"], config.UDP_FES["PORT"], "FES_MOTOR_GO") if FES_toggle == 1 else print("FES is disabled.")
-                send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_RESTART"])
-                # !!! How to make robot finish motion
+                messages = ["Robot Move"]
+                udp_messages = ["x", "g"]
+                colors = [config.green]
+                duration = duration = random.uniform(0.25 * config.TIME_ROB, 0.75 * config.TIME_ROB)
+                send_udp_message(fes_socket, config.UDP_FES["IP"], config.UDP_FES["PORT"], "FES_MOTOR_GO") if FES_toggle == 1 else print("FES is disabled. Skipping interaction.")
+                send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_BEGIN"])
+                
+                offsets = [0]
+                display_multiple_messages_with_udp(
+                    messages=messages, colors=colors, offsets=offsets,
+                    duration=duration, udp_messages=udp_messages,
+                    udp_socket=udp_socket_robot, udp_ip=config.UDP_ROBOT["IP"], udp_port=config.UDP_ROBOT["PORT"]
+                )
+
+                # !!! How to make robot finish ^^^
+                
+
                 while time.time() - start_time < duration:
                     #clock.tick(30)
                     time.sleep(0.1)
@@ -612,6 +626,11 @@ def hold_messages_and_classify(messages, colors, offsets, duration, inlet, mode,
         clock.tick(30)  # Maintain 30 FPS
     if early_stop == False:
         send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_END"])
+        send_udp_message(udp_socket_fes, config.UDP_FES["IP"], config.UDP_FES["PORT"], "FES_STOP") if FES_toggle == 1 else print("FES is disabled.")
+        display_multiple_messages_with_udp(
+            ["Stopping Robot"], [(255, 0, 0)], [0], duration=5,
+            udp_messages=["s"], udp_socket=udp_socket, udp_ip=udp_ip, udp_port=udp_port
+        )
     # Final Decision: Return correct or incorrect class based on confidence
     final_class = correct_class if running_avg_confidence >= config.RELAXATION_RATIO*config.ACCURACY_THRESHOLD else incorrect_class
     print(f"Confidence at the end of motion: {running_avg_confidence:.2f} after {num_predictions} predictions")
