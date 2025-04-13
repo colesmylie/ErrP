@@ -74,11 +74,11 @@ FES_TIMING_OFFSET = 4
 # above for motor FES, cut out X seconds before the full duration of movement. This should represent when the robot will naturally reach the end of motion (in successful case)
 
 # Screen Dimensions
-SCREEN_WIDTH = 3840
-SCREEN_HEIGHT = 2160
+#SCREEN_WIDTH = 3840
+#SCREEN_HEIGHT = 2160
 
-#SCREEN_WIDTH = 1200
-#SCREEN_HEIGHT = 800
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 800
 
 
 # Relevant Directories

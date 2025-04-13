@@ -214,7 +214,7 @@ while running and current_trial < len(trial_sequence):
         messages = ["Robot Move"]
         udp_messages = ["x", "g"]
         colors = [config.green]
-        duration = duration = random.uniform(0.25 * config.TIME_ROB, 0.75 * config.TIME_ROB)
+        duration = random.uniform(0.25 * 6, 0.75 * 6)
         send_udp_message(fes_socket, config.UDP_FES["IP"], config.UDP_FES["PORT"], "FES_MOTOR_GO") if FES_toggle == 1 else print("FES is disabled. Skipping interaction.")
         send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_BEGIN"])
     else:
@@ -234,6 +234,7 @@ while running and current_trial < len(trial_sequence):
         send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_END"])
         if mode == 2:
             send_udp_message(udp_socket_marker, config.UDP_MARKER["IP"], config.UDP_MARKER["PORT"], config.TRIGGERS["ROBOT_EARLYSTOP"])
+            display_multiple_messages_with_udp(["Robot Move"], [config.green], [0], duration=5, udp_messages=["s"], udp_socket=udp_socket_robot, udp_ip=config.UDP_ROBOT["IP"], udp_port=config.UDP_ROBOT["PORT"])
     
     display_fixation_period(duration = 3)
 
