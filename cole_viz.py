@@ -22,7 +22,7 @@ from Utils.stream_utils import get_channel_names_from_xdf, load_xdf
 subject = "PILOT_ERP_"
 session = "S001OFFLINE_NOFES"
 
-xdf_dir = "C:/Users/ccsmy/Downloads/thesis/code/harmony/BCI"
+xdf_dir =  "/home/millanslab/cole_ErrP/ErrP/"
 
 if not os.path.exists(xdf_dir):
     raise FileNotFoundError(f"❌ EEG directory not found: {xdf_dir}")
